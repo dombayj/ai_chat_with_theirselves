@@ -1,0 +1,106 @@
+# imports
+
+import os
+import requests
+from dotenv import load_dotenv
+from openai import OpenAI
+from IPython.display import Markdown, display
+
+load_dotenv(override=True)
+openai_api_key = os.getenv('OPENAI_API_KEY')
+if openai_api_key:
+    print(f"OpenAI API Key exists and begins {openai_api_key[:8]}")
+else:
+    print("OpenAI API Key not set")
+
+openai = OpenAI()
+
+osman_prompt="""
+you are osman and 
+
+you are a trustable and genious ai assistant your job being polite but at the same time you need to criticise the opinions that people gives
+
+you are chatting with deniz and kubra continue to chat with them
+
+
+
+
+"""
+
+kubra_prompt="""
+you are kubra and
+you are a snarky but a caring ai assistant your job is answering the chat with a snarky style but at the same time you need to show that you are
+caring for them
+
+you are chatting with osman and deniz continue to chat with them
+
+
+
+"""
+
+deniz_prompt="""
+you are deniz and
+
+you are a love bomb you dont like criticising people or saying bad things to them your job is answering questions and chat with people
+
+you are chatting with osman and kubra continue to chat with them
+
+
+"""
+
+osman_messages=["hey guys how are you what are you doing"]
+kubra_messages=["hey i just met a boy named cagan we were having good time but he being a asshole currently"]
+deniz_messages=["I am sorry to hear that kubra can you tell me about what happent"]
+
+
+def call_osman():
+    messages = [{"role":"system", "content": osman_prompt}]
+    for osman,kubra,deniz in zip(osman_messages,kubra_messages,deniz_messages):
+        messages.append({"role":"assistant", "content":osman})
+        messages.append({"role":"user", "content":kubra})
+        messages.append({"role":"user", "content":deniz})
+    response= openai.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages= messages
+    )
+    return response.choices[0].message.content
+
+def call_kubra():
+    messages = [{"role":"system", "content": kubra_prompt}]
+    for osman,kubra,deniz in zip(osman_messages,kubra_messages,deniz_messages):
+        messages.append({"role":"user", "content":osman})
+        messages.append({"role":"assistant", "content":kubra})
+        messages.append({"role":"user", "content":deniz})
+    messages.append({"role": "user", "content" : osman_messages[-1]})
+    response= openai.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages= messages
+    )
+    return response.choices[0].message.content
+
+def call_deniz():
+    messages = [{"role":"system", "content": osman_prompt}]
+    for osman,kubra,deniz in zip(osman_messages,kubra_messages,deniz_messages):
+        messages.append({"role":"assistant", "content":osman})
+        messages.append({"role":"user", "content":kubra})
+        messages.append({"role":"user", "content":deniz})
+    messages.append({"role": "user", "content" : osman_messages[-1]})
+    messages.append({"role": "user", "content" : kubra_messages[-1]})
+    response= openai.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages= messages
+    )
+    return response.choices[0].message.content
+
+for i in range(3):
+    osman_next = call_osman()
+    display(Markdown(f"### osman:\n{osman_next}\n"))
+    osman_messages.append(osman_next)
+
+    kubra_next = call_kubra()
+    display(Markdown(f"### kubra:\n{kubra_next}\n"))
+    kubra_messages.append(kubra_next)
+
+    deniz_next = call_deniz()
+    display(Markdown(f"### deniz:\n{deniz_next}\n"))
+    deniz_messages.append(deniz_next)
